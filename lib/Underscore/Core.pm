@@ -3,10 +3,12 @@ use strict;
 use warnings;
 
 require Exporter;
-our @ISA    = qw/Exporter/;
-our @EXPORT = qw/each map reduce reduce_right detect select reject all any include invoke pluck/;
+our @ISA = qw/Exporter/;
+our @EXPORT
+    = qw/each map reduce reduce_right detect select reject all any include invoke pluck max min sort_by/;
 
 use Carp;
+use Data::Util qw/is_number is_array_ref is_hash_ref/;
 
 use constant _LAST_ => "__undersocre__last__";
 
@@ -125,7 +127,7 @@ sub include {
     $class->any(
         $data,
         sub {
-            _equal( shift, $value );
+            _compare( shift, $value ) == 0; 
         }
     );
 }
@@ -151,18 +153,77 @@ sub pluck {
     );
 }
 
-sub _equal {
+sub max {
+    my ( $class, $data, $sub ) = @_;
+    _get_winner(
+        $class, $data, $sub,
+        sub {
+            _compare(@_) > 0;
+        }
+    );
+}
+
+sub min {
+    my ( $class, $data, $sub ) = @_;
+    _get_winner(
+        $class, $data, $sub,
+        sub {
+            _compare(@_) < 0;
+        }
+    );
+}
+
+sub sort_by {
+    my ( $class, $data, $itr ) = @_;
+    if ( is_array_ref($data) ) {
+        return [ sort { _compare( $itr->($a), $itr->($b) ) } @$data ];
+    }
+    elsif ( is_hash_ref($data) ) {
+        return [
+            @$data{
+                sort {
+                    _compare( $itr->( $data->{$a} ), $itr->( $data->{$b} ) )
+                    } keys %$data
+                }
+        ];
+    }
+    else {
+        croak "Must be reference of ARRAY or HASH";
+    }
+}
+
+
+sub _get_winner {
+    my ($class,$data, $sub, $decison_sub) = @_;
+    $class->reduce(
+        $data,
+        sub {
+            my ($memo, $value) = @_;
+            $value = $sub->($value) if $sub;
+            $memo = $value unless defined $memo;
+            $memo = $value if $decison_sub->($value, $memo);
+            return $memo;
+        },undef);
+}
+
+sub _compare {
     my ( $a, $b ) = @_;
     if ( ref $a eq ref $b ) {
         if ( ref $a eq '' ) {
-            return ( $a . '' ) eq ( $b . '' );
+            if ( is_number($a) && is_number($b) ) {
+                return $a <=> $b;
+            }
+            else {
+                return $a cmp $b;
+            }
+
         }
         else {
-            return $a == $b;
+            return $a <=> $b;
         }
     }
     else {
-        return "";
+        croak "Can't compare two imcompatible $a and $b";
     }
 }
 
