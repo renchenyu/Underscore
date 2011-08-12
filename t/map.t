@@ -6,7 +6,7 @@ use Test::More;
 
 use Underscore;
 
-subtest "mmap_on_array" => sub {
+subtest "map_on_array" => sub {
     my $result;
 
     my $sample   = [qw/1 2 3/];
@@ -17,15 +17,15 @@ subtest "mmap_on_array" => sub {
     my $expected = [qw/0 4 24/];
 
     #func
-    $result = __->mmap( $sample, $callback );
+    $result = __->map( $sample, $callback );
     is_deeply( $result, $expected );
 
     #oo
-    $result = __($sample)->mmap($callback);
+    $result = __($sample)->map($callback);
     is_deeply( $result, $expected );
 };
 
-subtest "mmap_on_hash" => sub {
+subtest "map_on_hash" => sub {
     my $result;
 
     my $sample = {
@@ -41,11 +41,11 @@ subtest "mmap_on_hash" => sub {
     my $expected = [qw/9 8 3/];
 
     #func
-    $result = __->mmap( $sample, $callback );
+    $result = __->map( $sample, $callback );
     is_deeply( $result, $expected );
 
     #oo
-    $result = __($sample)->mmap($callback);
+    $result = __($sample)->map($callback);
     is_deeply( $result, $expected );
 };
 

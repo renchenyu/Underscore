@@ -60,7 +60,8 @@ sub AUTOLOAD {
             no strict 'refs';
             *{$sub_name} = sub {
                 my ( $self, @argv ) = @_;
-                my $result = $core_sub->( undef, $self->{data}, @argv );
+                my $result
+                    = $core_sub->( 'Underscore::Core', $self->{data}, @argv );
 
                 return $self->{is_chain}
                     ? __PACKAGE__->new( $result, 1 )
